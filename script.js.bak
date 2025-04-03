@@ -1,0 +1,104 @@
+let apikey = "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";
+
+document.getElementById('input-icon').addEventListener('click', () => { // Changed "() => void" to "() =>"
+    if (document.getElementById('input').value !== '') { // Changed "!=" to "!=="
+
+        document.getElementsByClassName('search')[0].style.boxShadow = '0px 0px 5px rgba(239, 7, 7, 0.2) , inset 2px 2px 5px rgba(0, 0, 0, 0.2)'; // Fixed the rgba values
+        document.getElementsByClassName('loading')[0].style.display = 'flex';
+        document.getElementById('input-icon').style.cursor = 'not-allowed';
+        runMessage(document.getElementById('input').value);
+    }
+    else
+    {
+
+        document.getElementsByClassName('search')[0].style.boxShadow = '2px 2px 5px rgba(239, 7, 7, 0.2) , inset 2px 2px 5px rgba(255, 0, 0, 0.4)'; // Fixed the rgba values
+
+    }
+});
+
+let offButton = () => {
+    Array.from(document.getElementsByClassName('buttons')).forEach((el) => {
+        el.classList.remove('lan');
+    })
+}
+
+Array.from(document.getElementsByClassName('buttons')).forEach((el) => {
+    el.addEventListener('click', () => {
+        offButton();
+        el.classList.add('lan');
+    })
+})
+
+let runMessage = (message) => {
+// alert(message)
+let lan = "Response me in "+document.getElementsByClassName('lan')[0].innerText;
+
+fetch('https://api.openai.com/v1/completions', {
+    method: 'POST',
+    headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apikey}`
+    },
+    body : JSON.stringify({
+        model : "text-davinci-003" ,
+        prompt : message + ". But response me in " + lan,
+        "temperature": 0.5,
+        max_tokens : 3000
+    })
+}).then((response) => response.json())
+.then((result) => {
+    // console.log(result.choices[0].text);
+    document.getElementsByClassName('loading')[0].style.display = 'none';
+    messageBox(message,result.choices[0].text);
+}).catch((err) => {
+    document.getElementsByClassName('loading')[0].style.display = 'error:';
+}).finally((done) => {
+    document.getElementById('input').value ="";
+    document.getElementById('input-icon').style.cursor = 'pointer';
+})
+
+}
+
+let count = 0;
+
+let messageBox = (msg,res) => {
+    let myMessageBox = document.createElement('pre');
+    myMessageBox.classList.add('qus_bx')
+    let myMessage = document.createElement('p');
+    myMessage.innerHTML = msg;
+    myMessageBox.append(myMessage);
+    document.getElementById('history').append(myMessageBox);
+
+    let ansMessageBox = document.createElement('pre');
+    ansMessageBox.classList.add('ans_bx');
+    let ansMessage = document.createElement('p');
+    ansMessage.innerHTML = res;
+    ansMessage.id = 'ans'+count;
+    let copyIcon = document.createElement('i');
+    copyIcon.className = "bi bi-clipboard";
+    copyIcon.id = 'copy'+count;
+    ansMessageBox.append(copyIcon);
+    ansMessageBox.append(ansMessage);
+    document.getElementById('history').append(ansMessageBox);
+
+    copyIcon.onclick = () => {
+
+        inputCopy(ansMessage.id);
+        copyIcon.classList.remove('bi bi-clipboard');
+        copyIcon.classList.add('bi bi-clipboard2-check');
+        setTimeout(() => {
+            copyIcon.classList.add('bi bi-clipboard');
+            copyIcon.classList.remove('bi bi-clipboard2-check');
+        },3000);
+
+    }
+
+    count++;
+}
+const inputCopy = (id) => {
+
+    let message = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(message);
+
+}
